@@ -1,25 +1,30 @@
 import os
+import asyncio
 from telethon import TelegramClient, events
 
-# .env'den veya Railway environment variables'dan al
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+PHONE = os.environ.get("PHONE")
 SOURCE_GROUP_ID = int(os.environ.get("SOURCE_GROUP_ID"))
 MY_CHAT_ID = int(os.environ.get("MY_CHAT_ID"))
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
-client = TelegramClient("session", API_ID, API_HASH)
+# Kullanıcı hesabıyla giriş (grubu dinlemek için)
+user_client = TelegramClient("user_session", API_ID, API_HASH)
 
-@client.on(events.NewMessage(chats=SOURCE_GROUP_ID))
+# Bot ile mesaj göndermek için
+bot_client = TelegramClient("bot_session", API_ID, API_HASH)
+
+@user_client.on(events.NewMessage(chats=SOURCE_GROUP_ID))
 async def handler(event):
     msg = event.message.message or ""
     if "ETH" in msg.upper():
-        await client.send_message(MY_CHAT_ID, f"🚨 ETH SİNYALİ:\n\n{msg}")
+        await bot_client.send_message(MY_CHAT_ID, f"🚨 ETH SİNYALİ:\n\n{msg}")
 
 async def main():
-    await client.start(bot_token=BOT_TOKEN)
-    print("Bot çalışıyor...")
-    await client.run_until_disconnected()
+    await bot_client.start(bot_token=BOT_TOKEN)
+    await user_client.start(phone=PHONE)
+    print("Bot çalışıyor, grup dinleniyor...")
+    await user_client.run_until_disconnected()
 
-import asyncio
 asyncio.run(main())
